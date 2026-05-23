@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DermaBase — Skincare Sin Etiquetas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            50: '#F8FAFC',
+                            100: '#F1F5F9',
+                            800: '#1E293B',
+                            900: '#0F172A',
+                        },
+                        stone: {
+                            50: '#FAFAF9',
+                            100: '#F5F5F4',
+                            800: '#292524',
+                            900: '#1C1917',
+                        },
+                        pizarra: {
+                            50: '#F4F6F5',
+                            100: '#E3E8E5',
+                            500: '#4A5D52',
+                            600: '#3D4F45',
+                            700: '#2F3D35',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos base y utilidades personalizadas */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Animación para el menú móvil */
+        .mobile-menu-enter {
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .mobile-menu-enter-active {
+            transform: translateX(0);
+        }
+
+        /* Efecto hover sutil en cards */
+        .product-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Animación del contador del carrito */
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+        
+        .cart-pop {
+            animation: pop 0.3s ease;
+        }
+
+        /* Estilos para el acordeón de rutina */
+        .routine-step {
+            transition: all 0.3s ease;
+        }
+        
+        .routine-step:hover {
+            background-color: #F4F6F5;
+        }
+
+        /* Scrollbar personalizada sutil */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #FAFAF9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #D6D3D1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #A8A29E;
+        }
+
+        /* Overlay del menú móvil */
+        .overlay {
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay-active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-900 antialiased">
+
+    <!-- ========================================== -->
+    <!-- HEADER / NAVEGACIÓN                        -->
+    <!-- ========================================== -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-stone-50/90 backdrop-blur-md border-b border-stone-200/60">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 lg:h-20">
+                
+                <!-- Logo -->
+                <a href="#" class="flex items-center gap-2 group">
+                    <div class="w-8 h-8 bg-pizarra-600 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">D</span>
+                    </div>
+                    <span class="text-xl font-semibold tracking-tight text-stone-900 group-hover:text-pizarra-600 transition-colors">
+                        DermaBase
+                    </span>
+                </a>
+
+                <!-- Navegación Desktop -->
+                <nav class="hidden lg:flex items-center gap-8">
+                    <a href="#rutina" class="text-sm font-medium text-stone-600 hover:text-pizarra-600 transition-colors">Tu Rutina</a>
+                    <a href="#soluciones" class="text-sm font-medium text-stone-600 hover:text-pizarra-600 transition-colors">Soluciones</a>
+                    <a href="#productos" class="text-sm font-medium text-stone-600 hover:text-pizarra-600 transition-colors">Productos</a>
+                    <a href="#testimonios" class="text-sm font-medium text-stone-600 hover:text-pizarra-600 transition-colors">Experiencias</a>
+                </nav>
+
+                <!-- Acciones: Carrito + Menú Móvil -->
+                <div class="flex items-center gap-4">
+                    <!-- Botón Carrito -->
+                    <button id="cartBtn" class="relative p-2 text-stone-600 hover:text-pizarra-600 transition-colors" aria-label="Carrito">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        <span id="cartCount" class="absolute -top-1 -right-1 w-5 h-5 bg-pizarra-600 text-white text-xs font-bold rounded-full flex items-center justify-center opacity-0 transition-opacity">0</span>
+                    </button>
+
+                    <!-- Botón Menú Móvil -->
+                    <button id="mobileMenuBtn" class="lg:hidden p-2 text-stone-600 hover:text-pizarra-600 transition-colors" aria-label="Menú">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Overlay para menú móvil -->
+    <div id="overlay" class="overlay fixed inset-0 bg-stone-900/40 z-40 lg:hidden"></div>
+
+    <!-- Menú Móvil (Drawer) -->
+    <div id="mobileMenu" class="mobile-menu-enter fixed top-0 right-0 h-full w-80 max-w-full bg-white z-50 shadow-2xl lg:hidden">
+        <div class="p-6">
+            <div class="flex items-center justify-between mb-8">
+                <span class="text-lg font-semibold">Menú</span>
+                <button id="closeMenuBtn" class="p-2 text-stone-500 hover:text-stone-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <nav class="flex flex-col gap-1">
+                <a href="#rutina" class="mobile-link px-4 py-3 text-stone-700 hover:bg-pizarra-50 hover:text-pizarra-700 rounded-lg transition-colors font-medium">Tu Rutina</a>
+                <a href="#soluciones" class="mobile-link px-4 py-3 text-stone-700 hover:bg-pizarra-50 hover:text-pizarra-700 rounded-lg transition-colors font-medium">Soluciones</a>
+                <a href="#productos" class="mobile-link px-4 py-3 text-stone-700 hover:bg-pizarra-50 hover:text-pizarra-700 rounded-lg transition-colors font-medium">Productos</a>
+                <a href="#testimonios" class="mobile-link px-4 py-3 text-stone-700 hover:bg-pizarra-50 hover:text-pizarra-700 rounded-lg transition-colors font-medium">Experiencias</a>
+            </nav>
+            
+            <div class="mt-8 pt-8 border-t border-stone-200">
+                <button onclick="addToCart('kit-inicio')" class="w-full py-3 bg-pizarra-600 text-white rounded-lg font-medium hover:bg-pizarra-700 transition-colors">
+                    Comprar Kit de Inicio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- HERO SECTION                               -->
+    <!-- ========================================== -->
+    <section class="pt-32 pb-20 lg:pt-40 lg:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            
+            <!-- Contenido -->
+            <div class="order-2 lg:order-1">
+                <div class="inline-flex items-center gap-2 px-3 py-1 bg-pizarra-100 text-pizarra-700 rounded-full text-xs font-semibold tracking-wide uppercase mb-6">
+                    <span class="w-1.5 h-1.5 bg-pizarra-500 rounded-full"></span>
+                    Dermatología sin género
+                </div>
+                
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-stone-900 leading-[1.1] tracking-tight mb-6">
+                    Tu piel no tiene género.<br>
+                    <span class="text-pizarra-600">Tu rutina tampoco.</span>
+                </h1>
+                
+                <p class="text-lg text-stone-600 leading-relaxed mb-8 max-w-lg">
+                    Fórmulas respaldadas por dermatólogos, diseñadas para todo tipo de piel. 
+                    Sin fragancias artificiales, sin estereotipos, solo resultados.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="#productos" class="inline-flex items-center justify-center px-8 py-4 bg-pizarra-600 text-white font-medium rounded-lg hover:bg-pizarra-700 transition-colors shadow-sm">
+                        Descubrir productos
+                        <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
+                    </a>
+                    <a href="#rutina" class="inline-flex items-center justify-center px-8 py-4 bg-white text-stone-700 font-medium rounded-lg border border-stone-300 hover:bg-stone-50 transition-colors">
+                        Construir mi rutina
+                    </a>
+                </div>
+
+                <!-- Stats de confianza -->
+                <div class="mt-12 pt-8 border-t border-stone-200 grid grid-cols-3 gap-8">
+                    <div>
+                        <div class="text-2xl font-bold text-stone-900">50k+</div>
+                        <div class="text-sm text-stone-500 mt-1">Rutinas activas</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-stone-900">98%</div>
+                        <div class="text-sm text-stone-500 mt-1">Eficacia clínica</div>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-bold text-stone-900">0%</div>
+                        <div class="text-sm text-stone-500 mt-1">Fragancias</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Imagen Hero -->
+            <div class="order-1 lg:order-2 relative">
+                <div class="aspect-[4/5] lg:aspect-square bg-stone-200 rounded-2xl overflow-hidden relative">
+                    <!-- Placeholder: Imagen de productos skincare minimalistas -->
+                    <img src="https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&auto=format&fit=crop&q=80" 
+                         alt="Productos DermaBase sobre fondo neutro" 
+                         class="w-full h-full object-cover">
+                    
+                    <!-- Badge flotante -->
+                    <div class="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-pizarra-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-pizarra-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-sm font-semibold text-stone-900">Apto para piel sensible</div>
+                                <div class="text-xs text-stone-500">Testado dermatológicamente</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECCIÓN EDUCATIVA: RUTINA EN 3 PASOS       -->
+    <!-- ========================================== -->
+    <section id="rutina" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <h2 class="text-3xl lg:text-4xl font-bold text-stone-900 mb-4">Tu rutina en 3 pasos</h2>
+                <p class="text-stone-600 text-lg">
+                    No necesitas 12 productos. La ciencia dermatológica confirma que la consistencia 
+                    con lo básico supera a la complejidad.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 lg:gap-12">
+                
+                <!-- Paso 1: Limpiar -->
+                <div class="routine-step group p-8 rounded-2xl border border-stone-100 bg-stone-50/50 cursor-pointer">
+                    <div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <span class="text-2xl font-bold text-pizarra-600">01</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-stone-900 mb-3">Limpiar</h3>
+                    <p class="text-stone-600 leading-relaxed mb-4">
+                        Elimina impurezas, SPF y sebo acumulado sin alterar la barrera cutánea. 
+                        Base fundamental para que los activos posteriores penetren correctamente.
+                    </p>
+                    <div class="flex items-center text-pizarra-600 text-sm font-medium">
+                        <span>Ver limpiadores</span>
+                        <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Paso 2: Tratar -->
+                <div class="routine-step group p-8 rounded-2xl border border-stone-100 bg-stone-50/50 cursor-pointer">
+                    <div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <span class="text-2xl font-bold text-pizarra-600">02</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-stone-900 mb-3">Tratar</h3>
+                    <p class="text-stone-600 leading-relaxed mb-4">
+                        Aplica activos concentrados según tu objetivo: niacinamida para poros, 
+                        ácido hialurónico para hidratación, o retinol para renovación celular.
+                    </p>
+                    <div class="flex items-center text-pizarra-600 text-sm font-medium">
+                        <span>Ver tratamientos</span>
+                        <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- Paso 3: Proteger -->
+                <div class="routine-step group p-8 rounded-2xl border border-stone-100 bg-stone-50/50 cursor-pointer">
+                    <div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <span class="text-2xl font-bold text-pizarra-600">03</span>
+                    </div>
+                    <h3 class="text-xl font-semibold text-stone-900 mb-3">Proteger</h3>
+                    <p class="text-stone-600 leading-relaxed mb-4">
+                        Hidrata y protege con SPF 50+ cada mañana. El 90% del envejecimiento 
+                        prematuro proviene del sol. No negociables.
+                    </p>
+                    <div class="flex items-center text-pizarra-600 text-sm font-medium">
+                        <span>Ver protectores</span>
+                        <svg class="ml-1 w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Educativo -->
+            <div class="mt-12 text-center">
+                <button onclick="showRoutineModal()" class="inline-flex items-center gap-2 text-pizarra-600 font-medium hover:text-pizarra-700 transition-colors border-b-2 border-pizarra-200 hover:border-pizarra-600 pb-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    ¿No sabes por dónde empezar? Te guiamos paso a paso
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- SECCIÓN DE CATEGORÍAS / PROBLEMAS DE PIEL  -->
+    <!-- ========================================== -->
+    <section id="soluciones" class="py-20 bg-stone-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between mb-12">
+                <div class="max-w-2xl">
+                    <h2 class="text-3xl lg:text-4xl font-bold text-stone-900 mb-4">Soluciones por objetivo</h2>
+                    <p class="text-stone-600 text-lg">
+                        Selecciona tu preocupación principal. Nuestro sistema te recomendará 
+                        la combinación óptima de activos.
+                    </p>
+                </div>
+                <a href="#" class="mt-4 lg:mt-0 text-pizarra-600 font-medium hover:text-pizarra-700 transition-colors flex items-center gap-1">
+                    Ver todos los objetivos
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                    </svg>
+                </a>
+            </div>
+
+            <!-- Grid de Categorías -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+                
+                <!-- Acné y Poros -->
+                <a href="#" class="group relative bg-white rounded-2xl p-6 lg:p-8 border border-stone-200 hover:border-pizarra-300 transition-all hover:shadow-lg">
+                    <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-stone-900 mb-1">Acné y Poros</h3>
+                    <p class="text-sm text-stone-500">Ácido salicílico, niacinamida</p>
+                    <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-5 h-5 text-pizarra-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+
+                <!-- Hidratación -->
+                <a href="#" class="group relative bg-white rounded-2xl p-6 lg:p-8 border border-stone-200 hover:border-pizarra-300 transition-all hover:shadow-lg">
+                    <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 14.66V20a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2h2.34M20 14.66a3 3 0 01-3-3V6a3 3 0 013-3h2.34M20 14.66l-3.88-3.88M12 2v20"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-stone-900 mb-1">Hidratación</h3>
+                    <p class="text-sm text-stone-500">Ácido hialurónico, ceramidas</p>
+                    <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-5 h-5 text-pizarra-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+
+                <!-- Manchas y Tono -->
+                <a href="#" class="group relative bg-white rounded-2xl p-6 lg:p-8 border border-stone-200 hover:border-pizarra-300 transition-all hover:shadow-lg">
+                    <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-stone-900 mb-1">Manchas y Tono</h3>
+                    <p class="text-sm text-stone-500">Vitamina C, ácido azelaico</p>
+                    <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-5 h-5 text-pizarra-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+
+                <!-- Anti-edad -->
+                <a href="#" class="group relative bg-white rounded-2xl p-6 lg:p-8 border border-stone-200 hover:border-pizarra-300 transition-all hover:shadow-lg">
+                    <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h3 class="font-semibold text-stone-900 mb-1">Líneas y Firmeza</h3>
+                    <p class="text-sm text-stone-500">Retinol, péptidos</p>
+                    <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <svg class="w-5 h-5 text-pizarra-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- PRODUCTOS DESTACADOS (GRID 4)              -->
+    <!-- ========================================== -->
+    <section id="productos" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <h2 class="text-3xl lg:text-4xl font-bold text-stone-900 mb-4">Fórmulas esenciales</h2>
+                <p class="text-stone-600 text-lg">
+                    Cada producto contiene solo lo necesario. Sin rellenos, sin promesas imposibles.
+                </p>
+            </div>
+
+            <!-- Grid de Productos -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                
+                <!-- Producto 1 -->
+                <div class="product-card group bg-stone-50 rounded-2xl overflow-hidden border border-stone-100">
+                    <div class="aspect-square bg-stone-200 relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80" 
+                             alt="Gel Limpiador Suave" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <button onclick="addToCart('limpiador')" class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-stone-700 hover:bg-pizarra-600 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="p-5">
+                        <div class="text-xs font-semibold text-pizarra-600 uppercase tracking-wider mb-1">Paso 1</div>
+                        <h3 class="font-semibold text-stone-900 mb-1">Gel Limpiador Suave</h3>
+                        <p class="text-sm text-stone-500 mb-3">pH 5.5 · Sin sulfatos</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-lg font-bold text-stone-900">€24.00</span>
+                            <div class="flex items-center gap-1">
+                                <svg class="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <span class="text-sm text-stone-600">4.9</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Producto 2 -->
+                <div class="product-card group bg-stone-50 rounded-2xl overflow-hidden border border-stone-100">
+                    <div class="aspect-square bg-stone-200 relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=600&auto=format&fit=crop&q=80" 
+                             alt="Sérum Niacinamida 10%" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <button onclick="addToCart('niacinamida')" class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-stone-700 hover:bg-pizarra-600 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="p-5">
+                        <div class="text-xs font-semibold text-pizarra-600 uppercase tracking-wider mb-1">Paso 2</div>
+                        <h3 class="font-semibold text-stone-900 mb-1">Sérum Niacinamida 10%</h3>
+                        <p class="text-sm text-stone-500 mb-3">Poros · Textura · Control</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-lg font-bold text-stone-900">€32.00</span>
+                            <div class="flex items-center gap-1">
+                                <svg class="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <span class="text-sm text-stone-600">4.8</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Producto 3 -->
+                <div class="product-card group bg-stone-50 rounded-2xl overflow-hidden border border-stone-100">
+                    <div class="aspect-square bg-stone-200 relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1611930022073-b7a4ba5fcccd?w=600&auto=format&fit=crop&q=80" 
+                             alt="Hidratante Ligero" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <button onclick="addToCart('hidratante')" class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-stone-700 hover:bg-pizarra-600 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="p-5">
+                        <div class="text-xs font-semibold text-pizarra-600 uppercase tracking-wider mb-1">Paso 3</div>
+                        <h3 class="font-semibold text-stone-900 mb-1">Hidratante Ligero</h3>
+                        <p class="text-sm text-stone-500 mb-3">Ceramidas · No comedogénico</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-lg font-bold text-stone-900">€28.00</span>
+                            <div class="flex items-center gap-1">
+                                <svg class="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <span class="text-sm text-stone-600">4.9</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Producto 4 -->
+                <div class="product-card group bg-stone-50 rounded-2xl overflow-hidden border border-stone-100">
+                    <div class="aspect-square bg-stone-200 relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&auto=format&fit=crop&q=80" 
+                             alt="Protector Solar SPF 50" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <button onclick="addToCart('spf')" class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full shadow-md flex items-center justify-center text-stone-700 hover:bg-pizarra-600 hover:text-white transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="p-5">
+                        <div class="text-xs font-semibold text-pizarra-600 uppercase tracking-wider mb-1">Esencial</div>
+                        <h3 class="font-semibold text-stone-900 mb-1">Protector Solar SPF 50</h3>
+                        <p class="text-sm text-stone-500 mb-3">Invisible · Sin residuo blanco</p>
+                        <div class="flex items-center justify-between">
+                            <span class="text-lg font-bold text-stone-900">€26.00</span>
+                            <div class="flex items-center gap-1">
+                                <svg class="w-4 h-4 text-amber-400 fill-current" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                                </svg>
+                                <span class="text-sm text-stone-600">5.0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CTA Productos -->
+            <div class="mt-12 text-center">
+                <a href="#" class="inline-flex items-center justify-center px-8 py-4 bg-stone-900 text-white font-medium rounded-lg hover:bg-stone-800 transition-colors">
+                    Ver catálogo completo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TESTIMONIOS                                -->
+    <!-- ========================================== -->
+    <section id="testimonios" class="py-20 bg-stone-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <h2 class="text-3xl lg:text-4xl font-bold text-stone-900 mb-4">Historias reales</h2>
+                <p class="text-stone-600 text-lg">
+                    Personas que dejaron de lado los prejuicios y encontraron una piel más saludable.
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                
+                <!-- Testimonio 1 -->
+                <div class="bg-white p-8 rounded-2xl border border-stone-100 shadow-sm">
+                    <div class="flex items-center gap-1 mb-4">
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    </div>
+                    <p class="text-stone-700 leading-relaxed mb-6">
+                        "Nunca pensé que necesitaba una rutina hasta que probé el kit básico. En 3 semanas mi piel dejó de lucir cansada. Lo mejor: no huele a flores ni a 'producto de hombre'. Simplemente funciona."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-stone-300 rounded-full flex items-center justify-center text-stone-600 font-semibold text-sm">MR</div>
+                        <div>
+                            <div class="font-semibold text-stone-900 text-sm">Marcos R.</div>
+                            <div class="text-xs text-stone-500">32 años · Piel mixta</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonio 2 -->
+                <div class="bg-white p-8 rounded-2xl border border-stone-100 shadow-sm">
+                    <div class="flex items-center gap-1 mb-4">
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    </div>
+                    <p class="text-stone-700 leading-relaxed mb-6">
+                        "Como dermatóloga, valoro la transparencia de ingredientes. Finalmente una marca que no infantiliza a las mujeres ni aliena a los hombres. Recomiendo DermaBase a todos mis pacientes."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-pizarra-100 rounded-full flex items-center justify-center text-pizarra-700 font-semibold text-sm">DL</div>
+                        <div>
+                            <div class="font-semibold text-stone-900 text-sm">Dra. Laura V.</div>
+                            <div class="text-xs text-stone-500">41 años · Dermatóloga</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testimonio 3 -->
+                <div class="bg-white p-8 rounded-2xl border border-stone-100 shadow-sm">
+                    <div class="flex items-center gap-1 mb-4">
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        <svg class="w-5 h-5 text-amber-400 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    </div>
+                    <p class="text-stone-700 leading-relaxed mb-6">
+                        "El sérum de niacinamida cambió mi relación con los espejos. Por primera vez no me avergüenza decir que tengo una rutina de skincare. Es ciencia pura, sin etiquetas."
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-stone-300 rounded-full flex items-center justify-center text-stone-600 font-semibold text-sm">AP</div>
+                        <div>
+                            <div class="font-semibold text-stone-900 text-sm">Andrés P.</div>
+                            <div class="text-xs text-stone-500">27 años · Piel grasa</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- FOOTER                                     -->
+    <!-- ========================================== -->
+    <footer class="bg-stone-900 text-stone-400 py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-12 mb-12">
+                
+                <!-- Marca -->
+                <div class="md:col-span-1">
+                    <div class="flex items-center gap-2 mb-4">
+                        <div class="w-8 h-8 bg-pizarra-500 rounded-lg flex items-center justify-center">
+                            <span class="text-white font-bold text-sm">D</span>
+                        </div>
+                        <span class="text-xl font-semibold text-white">DermaBase</span>
+                    </div>
+                    <p class="text-sm leading-relaxed">
+                        Skincare fundamentado en evidencia científica. Sin género, sin fragancias, sin complicaciones.
+                    </p>
+                </div>
+
+                <!-- Links -->
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Productos</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Limpiadores</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Sérums</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Hidratantes</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Protectores solares</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Educación</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-white transition-colors">Guía de rutinas</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Ingredientes</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">Blog dermatológico</a></li>
+                        <li><a href="#" class="hover:text-white transition-colors">FAQ</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-semibold mb-4">Contacto</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li>hola@dermabase.com</li>
+                        <li>+34 900 123 456</li>
+                        <li class="pt-2 flex gap-4">
+                            <a href="#" class="hover:text-white transition-colors">Instagram</a>
+                            <a href="#" class="hover:text-white transition-colors">TikTok</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="pt-8 border-t border-stone-800 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
+                <p> 2024 DermaBase. Todos los derechos reservados.</p>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-white transition-colors">Privacidad</a>
+                    <a href="#" class="hover:text-white transition-colors">Términos</a>
+                    <a href="#" class="hover:text-white transition-colors">Envíos</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT                                  -->
+    <!-- ========================================== -->
+    <script>
+        // ==========================================
+        // ESTADO DEL CARRITO
+        // ==========================================
+        let cartItems = 0;
+        const cartCountEl = document.getElementById('cartCount');
+        const cartBtn = document.getElementById('cartBtn');
+
+        /**
+         * Agrega un producto al carrito
+         * @param {string} productId - Identificador del producto
+         */
+        function addToCart(productId) {
+            cartItems++;
+            updateCartUI();
+            
+            // Feedback visual temporal
+            const btn = event.currentTarget;
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+            btn.classList.add('bg-green-600', 'text-white');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalContent;
+                btn.classList.remove('bg-green-600', 'text-white');
+            }, 1500);
+        }
+
+        /**
+         * Actualiza la interfaz del contador del carrito
+         */
+        function updateCartUI() {
+            cartCountEl.textContent = cartItems;
+            El código se cortó al final. Aquí tienes la continuación y cierre del JavaScript para completar la funcionalidad:
+
+```javascript
+            cartCountEl.classList.remove('opacity-0');
+            cartCountEl.classList.add('cart-pop');
+            
+            setTimeout(() => {
+                cartCountEl.classList.remove('cart-pop');
+            }, 300);
+        }
+
+        // ==========================================
+        // MENÚ MÓVIL
+        // ==========================================
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const overlay = document.getElementById('overlay');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        /**
+         * Abre el menú móvil
+         */
+        function openMobileMenu() {
+            mobileMenu.classList.add('mobile-menu-enter-active');
+            overlay.classList.add('overlay-active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        /**
+         * Cierra el menú móvil
+         */
+        function closeMobileMenu() {
+            mobileMenu.classList.remove('mobile-menu-enter-active');
+            overlay.classList.remove('overlay-active');
+            document.body.style.overflow = '';
+        }
+
+        // Event Listeners
+        mobileMenuBtn.addEventListener('click', openMobileMenu);
+        closeMenuBtn.addEventListener('click', closeMobileMenu);
+        overlay.addEventListener('click', closeMobileMenu);
+
+        // Cerrar menú al hacer click en un enlace
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        // Cerrar con tecla Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && overlay.classList.contains('overlay-active')) {
+                closeMobileMenu();
+            }
+        });
+
+        // ==========================================
+        // NAVEGACIÓN SUAVE
+        // ==========================================
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    const headerOffset = 80;
+                    const elementPosition = target.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                    window.scrollTo({
+                        top: offsetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // ==========================================
+        // HEADER SCROLL EFFECT
+        // ==========================================
+        const header = document.querySelector('header');
+        let lastScroll = 0;
+
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 100) {
+                header.classList.add('shadow-sm');
+            } else {
+                header.classList.remove('shadow-sm');
+            }
+            
+            lastScroll = currentScroll;
+        });
+
+        // ==========================================
+        // MODAL DE RUTINA (Placeholder)
+        // ==========================================
+        function showRoutineModal() {
+            // Aquí se implementaría un modal más elaborado
+            // Por ahora, un alert educativo y amigable
+            alert('🧪 Próximamente: Nuestro asistente de rutina personalizada te ayudará a seleccionar los productos ideales según tu tipo de piel y objetivos.\n\nMientras tanto, escríbenos a hola@dermabase.com para una consulta gratuita.');
+        }
+
+        // ==========================================
+        // INICIALIZACIÓN
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DermaBase UI inicializada. Skincare sin etiquetas.');
+        });
+    </script>
+</body>
+</html>
